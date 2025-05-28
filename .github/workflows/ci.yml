@@ -25,6 +25,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          path: dotfiles
 
       - name: Install linting tools
         run: brew install shellcheck yamllint markdownlint-cli2
@@ -47,3 +49,26 @@ jobs:
               done
             ' sh {} + \
           | xargs shellcheck
+
+  test:
+    needs: lint
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - macos-14
+          - macos-15
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          path: dotfiles
+
+      - name: Install test tools
+        run: brew install rcm
+
+      - name: Install dotfiles
+        run: env RCRC=$GITHUB_WORKSPACE/dotfiles/rcrc rcup
