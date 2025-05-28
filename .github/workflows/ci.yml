@@ -47,6 +47,7 @@ jobs:
           ' sh {} +)
 
           if [ -n "$files" ]; then
+            echo "$files"
             echo "$files" | xargs shellcheck
             if [ $? -eq 0 ]; then
               echo "No errors found in bash or shell script files."
@@ -62,6 +63,7 @@ jobs:
           files=$(find . -type f \( -name 'zshrc' -o -name '*.zsh' \))
 
           if [ -n "$files" ]; then
+            echo "$files"
             echo "$files" | xargs zsh -n
             if [ $? -eq 0 ]; then
               echo "No errors found in zsh files."
