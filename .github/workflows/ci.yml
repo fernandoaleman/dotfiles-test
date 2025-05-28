@@ -29,7 +29,7 @@ jobs:
           path: dotfiles
 
       - name: Install linting tools
-        run: brew install shellcheck yamllint markdownlint-cli2
+        run: brew install shellcheck yamllint markdownlint-cli2 zsh
 
       - name: yamllint
         run: yamllint .
@@ -39,17 +39,38 @@ jobs:
 
       - name: shellcheck
         run: |
-          find . -maxdepth 1 -type f \
-            ! -name "*.sh" \
-            ! -name "*.bash" \
-            ! -name "*.zsh" \
-            -exec sh -c '
-              for file; do
-                head -n1 "$file" | grep -qE "^#!.*(sh|bash|zsh)" && echo "$file"
-              done
-            ' sh {} + \
-          | xargs shellcheck
+          files=$(find . -type f ! -path './.git/*' -exec sh -c '
+            for file; do
+              head -n 1 "$file" \
+              | grep -Eq "^#!(/usr/bin/env )?(bash|sh)$" && echo "$file"
+            done
+          ' sh {} +)
 
+          if [ -n "$files" ]; then
+            echo "$files" | xargs shellcheck
+            if [ $? -eq 0 ]; then
+              echo "No errors found in bash or shell script files."
+              exit 0
+            fi
+          else
+            echo "No matching shell scripts found to check."
+            exit 0
+          fi
+
+      - name: zsh
+        run: |
+          files=$(find . -type f \( -name 'zshrc' -o -name '*.zsh' \))
+
+          if [ -n "$files" ]; then
+            echo "$files" | xargs zsh -n
+            if [ $? -eq 0 ]; then
+              echo "No errors found in zsh files."
+              exit 0
+            fi
+          else
+            echo "No matching zsh scripts found to check."
+              exit 0
+          fi
   test:
     needs: lint
     runs-on: ${{ matrix.os }}
